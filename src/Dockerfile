@@ -19,7 +19,7 @@ RUN npm ci --only=production && npm cache clean --force
 
 # Copy application code
 COPY index.js ./
-COPY .env.example ./.env
+COPY config.env ./.env
 
 # Create logs directory
 RUN mkdir -p /app/logs && chown nodejs:nodejs /app/logs
