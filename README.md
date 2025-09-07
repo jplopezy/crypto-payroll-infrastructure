@@ -62,11 +62,58 @@ If this service were extended to deploy smart contracts (employee vesting contra
 
 ## Getting Started
 
-1. Clone the repository
-2. Configure AWS credentials
-3. Update variables in `terraform/variables.tf`
-4. Run `terraform init && terraform plan && terraform apply`
-5. Deploy the application using the CI/CD pipeline
+### Prerequisites
+- AWS CLI configured with appropriate permissions
+- Terraform v1.0+
+- Docker v20.0+
+- Node.js v18+ (for local development)
+
+### Quick Deployment
+```bash
+# Clone the repository
+git clone https://github.com/jplopezy/crypto-payroll-infrastructure.git
+cd crypto-payroll-infrastructure
+
+# Configure environment
+cp env.example .env
+# Edit .env with your configuration
+
+# Deploy infrastructure
+chmod +x deploy.sh
+./deploy.sh dev
+```
+
+### Manual Deployment
+```bash
+# 1. Deploy infrastructure
+cd terraform
+terraform init
+terraform workspace new dev
+terraform plan -var="environment=dev"
+terraform apply
+
+# 2. Configure secrets
+aws secretsmanager update-secret \
+  --secret-id crypto-payroll/external-signing-api-key \
+  --secret-string '{"api_key":"your-api-key"}'
+
+# 3. Build and deploy application
+docker build -t crypto-payroll-api ./src
+# Push to ECR and update ECS service
+```
+
+### Local Development
+```bash
+# Using Docker Compose
+docker-compose up -d
+
+# Or manual setup
+cd src
+npm install
+npm run dev
+```
+
+For detailed instructions, see [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ## Security Considerations
 

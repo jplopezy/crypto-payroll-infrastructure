@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  crypto-payroll-api:
+    build:
+      context: ./src
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=development
+      - PORT=8080
+      - AWS_REGION=us-east-1
+      - LOG_LEVEL=debug
+    env_file:
+      - ./env.example
+    volumes:
+      - ./src:/app
+      - /app/node_modules
+    depends_on:
+      - redis
+    networks:
+      - crypto-payroll-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - crypto-payroll-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - crypto-payroll-api
+    networks:
+      - crypto-payroll-network
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+
+networks:
+  crypto-payroll-network:
+    driver: bridge

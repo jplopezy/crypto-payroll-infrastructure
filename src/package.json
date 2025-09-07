@@ -4,15 +4,16 @@
   "description": "Secure crypto payroll microservice for BAX",
   "main": "dist/index.js",
   "scripts": {
-    "start": "node dist/index.js",
-    "dev": "nodemon src/index.ts",
-    "build": "tsc",
+    "start": "node index.js",
+    "dev": "nodemon index.js",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix",
+    "lint": "eslint *.js",
+    "lint:fix": "eslint *.js --fix",
     "security:audit": "npm audit --audit-level=high",
-    "security:scan": "snyk test"
+    "security:scan": "snyk test",
+    "docker:build": "docker build -t crypto-payroll-api .",
+    "docker:run": "docker run -p 8080:8080 crypto-payroll-api"
   },
   "keywords": [
     "crypto",
@@ -29,14 +30,13 @@
     "cors": "^2.8.5",
     "compression": "^1.7.4",
     "aws-sdk": "^2.1490.0",
-    "aws-secrets-manager": "^1.0.0",
     "jsonwebtoken": "^9.0.2",
     "bcryptjs": "^2.4.3",
-    "crypto": "^1.0.1",
     "multer": "^1.4.5-lts.1",
     "joi": "^17.11.0",
     "winston": "^3.11.0",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "express-rate-limit": "^7.1.5"
   },
   "devDependencies": {
     "@types/node": "^20.8.0",
