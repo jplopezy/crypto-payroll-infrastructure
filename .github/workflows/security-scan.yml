@@ -1,0 +1,194 @@
+name: Security Scanning
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'terraform/**'
+
+jobs:
+  code-security-scan:
+    name: Code Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+          generateSarif: "1"
+          outputFile: semgrep-results.sarif
+
+      - name: Upload Semgrep results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep-results.sarif
+
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          languages: javascript, python
+
+  container-security-scan:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t crypto-payroll-api:test .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'crypto-payroll-api:test'
+          format: 'sarif'
+          output: 'trivy-container-results.sarif'
+
+      - name: Upload Trivy container results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-container-results.sarif
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --file=Dockerfile --severity-threshold=high
+
+  dependency-scan:
+    name: Dependency Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+      - name: Run npm audit
+        run: |
+          if [ -f "package.json" ]; then
+            npm audit --audit-level=high
+          fi
+
+  infrastructure-security-scan:
+    name: Infrastructure Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: terraform
+          format: sarif
+          output: tfsec-results.sarif
+
+      - name: Upload tfsec results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: tfsec-results.sarif
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: terraform
+          framework: terraform
+          output_format: sarif
+          output_file_path: checkov-results.sarif
+
+      - name: Upload Checkov results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: checkov-results.sarif
+
+      - name: Run Terrascan
+        uses: accurics/terrascan-action@v1.0.0
+        with:
+          iac_type: terraform
+          iac_version: v14
+          policy_type: aws
+          scan_path: terraform
+          output_format: sarif
+          output_file_path: terrascan-results.sarif
+
+      - name: Upload Terrascan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: terrascan-results.sarif
+
+  compliance-check:
+    name: Compliance Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Open Policy Agent (OPA) Conftest
+        uses: instrumenta/conftest@master
+        with:
+          files: terraform/
+          policy: policies/
+          output: sarif
+          output-file: conftest-results.sarif
+
+      - name: Upload Conftest results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: conftest-results.sarif
+
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [code-security-scan, container-security-scan, dependency-scan, infrastructure-security-scan]
+    if: always()
+    
+    steps:
+      - name: Generate Security Report
+        run: |
+          echo "## Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Scan Type | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Security | ${{ needs.code-security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Container Security | ${{ needs.container-security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency Scan | ${{ needs.dependency-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Infrastructure Security | ${{ needs.infrastructure-security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.code-security-scan.result }}" == "failure" || 
+                "${{ needs.container-security-scan.result }}" == "failure" || 
+                "${{ needs.dependency-scan.result }}" == "failure" || 
+                "${{ needs.infrastructure-security-scan.result }}" == "failure" ]]; then
+            echo "⚠️ Some security scans failed. Please review the results." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ All security scans passed successfully!" >> $GITHUB_STEP_SUMMARY
+          fi

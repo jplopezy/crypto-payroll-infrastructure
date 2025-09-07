@@ -1,0 +1,57 @@
+# Terraform Environment Configuration
+
+# Development Environment
+terraform {
+  required_version = ">= 1.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.1"
+    }
+  }
+}
+
+# Development variables
+variable "environment" {
+  default = "dev"
+}
+
+variable "aws_region" {
+  default = "us-east-1"
+}
+
+variable "project_name" {
+  default = "crypto-payroll"
+}
+
+# Production Environment
+# Uncomment and modify for production deployment
+# terraform {
+#   required_version = ">= 1.0"
+#   required_providers {
+#     aws = {
+#       source  = "hashicorp/aws"
+#       version = "~> 5.0"
+#     }
+#     random = {
+#       source  = "hashicorp/random"
+#       version = "~> 3.1"
+#     }
+#   }
+# }
+
+# variable "environment" {
+#   default = "prod"
+# }
+
+# variable "aws_region" {
+#   default = "us-east-1"
+# }
+
+# variable "project_name" {
+#   default = "crypto-payroll"
+# }
