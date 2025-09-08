@@ -1,3 +1,4 @@
 "Trigger: $(Get-Date)"  
 "Trigger security scan with Snyk fix - $(Get-Date)" 
 "Security scan trigger - $(Get-Date)"  
+"Execute simplified security scan - $(Get-Date)"  
