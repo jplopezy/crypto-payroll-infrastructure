@@ -145,3 +145,4 @@ crypto-payroll-infrastructure/
 │   └── Dockerfile            # Container configuration
 └── README.md                 # This file
 ```
+"# Security fixes applied" 
