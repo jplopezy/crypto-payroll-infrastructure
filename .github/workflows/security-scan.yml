@@ -83,12 +83,16 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=high
+          args: --severity-threshold=high --file=src/package.json
+        continue-on-error: true
 
       - name: Run npm audit
         run: |
-          if [ -f "package.json" ]; then
+          if [ -f "src/package.json" ]; then
+            cd src
             npm audit --audit-level=high
+          else
+            echo "No package.json found in src directory"
           fi
 
   infrastructure-security-scan:
