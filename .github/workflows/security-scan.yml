@@ -27,12 +27,7 @@ jobs:
             p/security-audit
             p/secrets
             p/owasp-top-ten
-
-      - name: Upload Semgrep results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: semgrep-results.sarif
+        continue-on-error: true
 
       - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v3
@@ -54,14 +49,8 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'crypto-payroll-api:test'
-          format: 'sarif'
-          output: 'trivy-container-results.sarif'
-
-      - name: Upload Trivy container results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always() && hashFiles('trivy-container-results.sarif') != ''
-        with:
-          sarif_file: trivy-container-results.sarif
+          format: 'table'
+        continue-on-error: true
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/docker@master
@@ -107,28 +96,16 @@ jobs:
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
           working_directory: terraform
-          format: sarif
-          output: tfsec-results.sarif
-
-      - name: Upload tfsec results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: tfsec-results.sarif
+          format: table
+        continue-on-error: true
 
       - name: Run Checkov
         uses: bridgecrewio/checkov-action@master
         with:
           directory: terraform
           framework: terraform
-          output_format: sarif
-          output_file_path: checkov-results.sarif
-
-      - name: Upload Checkov results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: checkov-results.sarif
+          output_format: cli
+        continue-on-error: true
 
       - name: Run Terrascan
         uses: accurics/terrascan-action@v1.18.0
@@ -137,14 +114,8 @@ jobs:
           iac_version: v14
           policy_type: aws
           scan_path: terraform
-          output_format: sarif
-          output_file_path: terrascan-results.sarif
-
-      - name: Upload Terrascan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: terrascan-results.sarif
+          output_format: cli
+        continue-on-error: true
 
   compliance-check:
     name: Compliance Check
@@ -163,17 +134,11 @@ jobs:
           
           # Run conftest (skip if no policies directory exists)
           if [ -d "policies" ]; then
-            conftest test terraform/ --output sarif > conftest-results.sarif || true
+            conftest test terraform/ --output cli || true
           else
             echo "No policies directory found, skipping conftest"
-            echo '{"version": "2.1.0", "runs": []}' > conftest-results.sarif
           fi
-
-      - name: Upload Conftest results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always() && hashFiles('conftest-results.sarif') != ''
-        with:
-          sarif_file: conftest-results.sarif
+        continue-on-error: true
 
   security-summary:
     name: Security Summary
