@@ -36,15 +36,21 @@ jobs:
         # Install Semgrep
         pip install semgrep
         
-        # Run Semgrep scan
+        # Run Semgrep scan with individual configs
         echo "Running Semgrep security scan..."
-        semgrep --config="p/security-audit,p/secrets,p/owasp-top-ten" --json --output=semgrep-results.json . || true
+        semgrep --config="p/security-audit" --json --output=semgrep-results.json . || true
         
         # Display results in readable format
         if [ -f "semgrep-results.json" ]; then
           echo "Semgrep scan completed. Results:"
-          semgrep --config="p/security-audit,p/secrets,p/owasp-top-ten" --text . || true
+          semgrep --config="p/security-audit" --text . || true
         fi
+        
+        echo "Running Semgrep secrets scan..."
+        semgrep --config="p/secrets" --text . || true
+        
+        echo "Running Semgrep OWASP scan..."
+        semgrep --config="p/owasp-top-ten" --text . || true
       continue-on-error: true
 
     - name: Container Security Scan
