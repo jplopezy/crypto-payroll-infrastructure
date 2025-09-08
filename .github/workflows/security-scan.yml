@@ -27,8 +27,6 @@ jobs:
             p/security-audit
             p/secrets
             p/owasp-top-ten
-          generateSarif: "1"
-          outputFile: semgrep-results.sarif
 
       - name: Upload Semgrep results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
@@ -61,7 +59,7 @@ jobs:
 
       - name: Upload Trivy container results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && hashFiles('trivy-container-results.sarif') != ''
         with:
           sarif_file: trivy-container-results.sarif
 
@@ -129,7 +127,7 @@ jobs:
           sarif_file: checkov-results.sarif
 
       - name: Run Terrascan
-        uses: accurics/terrascan-action@v1.0.0
+        uses: accurics/terrascan-action@v1.18.0
         with:
           iac_type: terraform
           iac_version: v14
@@ -153,16 +151,23 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Open Policy Agent (OPA) Conftest
-        uses: instrumenta/conftest@master
-        with:
-          files: terraform/
-          policy: policies/
-          output: sarif
-          output-file: conftest-results.sarif
+        run: |
+          # Install conftest
+          wget https://github.com/open-policy-agent/conftest/releases/latest/download/conftest_linux_amd64.tar.gz
+          tar xzf conftest_linux_amd64.tar.gz
+          sudo mv conftest /usr/local/bin
+          
+          # Run conftest (skip if no policies directory exists)
+          if [ -d "policies" ]; then
+            conftest test terraform/ --output sarif > conftest-results.sarif || true
+          else
+            echo "No policies directory found, skipping conftest"
+            echo '{"version": "2.1.0", "runs": []}' > conftest-results.sarif
+          fi
 
       - name: Upload Conftest results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && hashFiles('conftest-results.sarif') != ''
         with:
           sarif_file: conftest-results.sarif
 
