@@ -1,1 +1,1 @@
-"Trigger security scan - $(Get-Date)" 
+"Trigger: $(Get-Date)"  
