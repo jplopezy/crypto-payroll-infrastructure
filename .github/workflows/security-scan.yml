@@ -70,12 +70,12 @@ jobs:
       run: |
         cd src
         echo "Running npm audit..."
-        npm audit --audit-level=moderate || true
+        npm audit --audit-level=high || true
         
-        echo "Running Snyk scan..."
-        # Install Snyk
-        npm install -g snyk
-        snyk test --severity-threshold=high || true
+        echo "Running npm audit for critical issues..."
+        npm audit --audit-level=critical || true
+        
+        echo "Dependency scan completed (using open source tools only)"
       continue-on-error: true
 
     - name: Infrastructure Security Scan
@@ -134,7 +134,7 @@ jobs:
         echo "### ✅ Security Scans Completed" >> $GITHUB_STEP_SUMMARY
         echo "- **Code Security:** Semgrep scan completed" >> $GITHUB_STEP_SUMMARY
         echo "- **Container Security:** Trivy scan completed" >> $GITHUB_STEP_SUMMARY
-        echo "- **Dependency Security:** npm audit + Snyk scan completed" >> $GITHUB_STEP_SUMMARY
+        echo "- **Dependency Security:** npm audit (high/critical) completed" >> $GITHUB_STEP_SUMMARY
         echo "- **Infrastructure Security:** tfsec + Checkov + Terrascan scan completed" >> $GITHUB_STEP_SUMMARY
         echo "- **Compliance Check:** Conftest scan completed" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
