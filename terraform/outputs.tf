@@ -35,15 +35,7 @@ output "ecs_service_name" {
   value       = aws_ecs_service.main.name
 }
 
-output "alb_dns_name" {
-  description = "DNS name of the Application Load Balancer"
-  value       = aws_lb.main.dns_name
-}
-
-output "alb_zone_id" {
-  description = "Zone ID of the Application Load Balancer"
-  value       = aws_lb.main.zone_id
-}
+# ALB outputs removed due to account limitations
 
 output "s3_bucket_name" {
   description = "Name of the S3 bucket"

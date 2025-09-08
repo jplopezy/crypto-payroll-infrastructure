@@ -61,7 +61,7 @@ if %errorlevel% neq 0 (
 echo ✅ Docker image pushed successfully
 
 echo 🔄 Updating ECS service...
-aws ecs update-service --cluster crypto-payroll-dev-cluster --service crypto-payroll-dev-service --force-new-deployment
+aws ecs update-service --cluster crypto-payroll-cluster --service crypto-payroll-service --force-new-deployment
 if %errorlevel% neq 0 (
     echo ❌ ECS service update failed
     pause
@@ -70,7 +70,7 @@ if %errorlevel% neq 0 (
 echo ✅ ECS service update initiated
 
 echo ⏳ Waiting for deployment to complete...
-aws ecs wait services-stable --cluster crypto-payroll-dev-cluster --services crypto-payroll-dev-service
+aws ecs wait services-stable --cluster crypto-payroll-cluster --services crypto-payroll-service
 if %errorlevel% neq 0 (
     echo ⚠️ Service deployment may still be in progress
 ) else (
@@ -82,12 +82,12 @@ echo =================================
 echo Your Crypto Payroll API is now running in AWS ECS!
 echo.
 echo Image: %IMAGE_TAG%
-echo Cluster: crypto-payroll-dev-cluster
-echo Service: crypto-payroll-dev-service
+echo Cluster: crypto-payroll-cluster
+echo Service: crypto-payroll-service
 echo.
 echo Next steps:
-echo 1. Get the ALB DNS name: aws elbv2 describe-load-balancers --query "LoadBalancers[?contains(LoadBalancerName,'crypto-payroll')].DNSName" --output text
-echo 2. Test the health endpoint: curl http://[ALB-DNS]/health
-echo 3. Monitor logs: aws logs tail /aws/ecs/crypto-payroll-dev --follow
+echo 1. Get the service IP: aws ecs describe-services --cluster crypto-payroll-cluster --services crypto-payroll-service --query "services[0].deployments[0].status"
+echo 2. Test the health endpoint: curl http://[SERVICE-IP]:3000/health
+echo 3. Monitor logs: aws logs tail /aws/ecs/crypto-payroll --follow
 
 pause
