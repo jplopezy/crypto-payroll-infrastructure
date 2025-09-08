@@ -95,7 +95,7 @@ jobs:
         pip install checkov
         
         # Install Terrascan
-        wget -O terrascan.tar.gz https://github.com/tenable/terrascan/releases/latest/download/terrascan_1.18.0_Linux_x86_64.tar.gz
+        wget -O terrascan.tar.gz https://github.com/tenable/terrascan/releases/latest/download/terrascan_linux_amd64.tar.gz
         tar -xzf terrascan.tar.gz
         chmod +x terrascan
         sudo mv terrascan /usr/local/bin/
